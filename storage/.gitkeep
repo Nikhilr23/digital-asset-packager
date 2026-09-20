@@ -1,0 +1,1 @@
+# Keep storage directory in git so generated files can be created without manual folder creation.
