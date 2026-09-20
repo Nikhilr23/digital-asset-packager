@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 # Set environment variable to use the installed Chromium instead of downloading a new one
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Create app directory
@@ -26,4 +26,3 @@ EXPOSE 3000
 
 # Start the server
 CMD ["node", "server.js"]
-EOF

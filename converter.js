@@ -32,9 +32,15 @@ async function generatePDF(text, themeKey, outputFilename) {
         args: ['--no-sandbox', '--disable-setuid-sandbox'] 
     });
     const page = await browser.newPage();
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-    await page.pdf({ path: outputFilename, format: 'A4', printBackground: true });
-    await browser.close();
+    try {
+        await page.setJavaScriptEnabled(false);
+        await page.setRequestInterception(true);
+        page.on('request', request => request.abort());
+        await page.setContent(fullHtml, { waitUntil: 'domcontentloaded' });
+        await page.pdf({ path: outputFilename, format: 'A4', printBackground: true });
+    } finally {
+        await browser.close();
+    }
     
     return outputFilename;
 }
@@ -52,7 +58,7 @@ async function generateEPUB(text, title, author, outputFilename) {
         ]
     };
 
-    await epubGenerator(option, outputFilename);
+    await new epubGenerator(option, outputFilename).promise;
     return outputFilename;
 }
 
