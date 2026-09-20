@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family: Inter, Arial, sans-serif;
+}
+
+textarea {
+  resize: vertical;
+}
+
+#status-box {
+  min-height: 80px;
+}
