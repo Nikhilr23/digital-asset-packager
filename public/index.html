@@ -1,217 +1,95 @@
-require('dotenv').config();
-const express = require('express');
-const path = require('path');
-const jwt = require('jsonwebtoken');
-const { packageBook } = require('./converter');
-const {
-  initDatabase,
-  createUser,
-  verifyUser,
-  getUserById,
-  getAssetsByUser,
-  logAsset
-} = require('./db');
-const { buildDownloadUrl } = require('./storage');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Asset Packager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+    <div class="max-w-4xl mx-auto py-16 px-4">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold mb-4">📦 Digital Asset Packager</h1>
+            <p class="text-slate-600">Turn raw text into professional PDF & EPUB e-books instantly.</p>
+        </header>
 
-const app = express();
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+        <div class="bg-white shadow-xl rounded-2xl p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Book Title</label>
+                        <input id="title" type="text" placeholder="e.g. The SaaS Blueprint" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Author Name</label>
+                        <input id="author" type="text" placeholder="Your Name" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Content (Markdown/Text)</label>
+                        <textarea id="text" rows="12" placeholder="# My Book... " class="w-//full p-2 border rounded-lg font-mono text-sm"></textarea>
+                    </div>
+                </div>
 
-app.use(express.json({ limit: '10mb' }));
-app.use('/downloads', express.static(path.join(__dirname, '..', 'storage')));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+                <div class="bg-slate-100 p-6 rounded-xl space-y-6">
+                    <h3 class="text-lg font-semibold">Packaging Settings</h3>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Visual Theme</label>
+                        <select id="theme" class="w-full p-2 border rounded-lg bg-white">
+                            <option value="minimalist">✨ Clean Minimalist</option>
+                            <option value="professional">💼 Professional Bold</option>
+                        </select>
+                    </div>
+                    <div class="p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
+                        <strong>Pro Tip:</strong> Use # for headers and **bold** for emphasis in your text.
+                    </div>
+                    <button id="packBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200">
+                        Package Assets 🚀
+                    </button>
+                    <div id="results" class="hidden space-y-3 pt-4">
+                        <p class="text-center text-sm font-medium">Your assets are ready!</p>
+                        <a id="pdfLink" href="#" class="block w-full text-center bg-white border border-slate-300 py-2 rounded-lg hover:bg-slate-50">📄 Download PDF</a>
+                        <a id="epubLink" href="#" class="block w-full text-center bg-white border border-slate-300 py-2 rounded-lg hover:bg-slate-50">📖 Download EPUB</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-function generateToken(user) {
-  return jwt.sign(
-    {
-      sub: user.id,
-      email: user.email,
-      planType: user.plan_type || 'starter'
-    },
-    JWT_SECRET,
-    { expiresIn: '7d' }
-  );
-}
+    <script>
+        document.getElementById('packBtn').onclick = async () => {
+            const btn = document.getElementById('packBtn');
+            const resDiv = document.getElementById('results');
+            btn.disabled = true;
+            btn.innerText = "Packaging...";
+            resDiv.classList.add('hidden');
 
-function getAuthUser(req) {
-  const authHeader = req.headers.authorization || '';
-  if (!authHeader.startsWith('Bearer ')) {
-    return null;
-  }
+            const formData = new FormData();
+            formData.append('text', document.getElementById('text').value);
+            formData.append('title', document.getElementById('title').value);
+            formData.append('author', document.getElementById('author').value);
+            formData.append('theme', document.getElementById('theme').value);
 
-  try {
-    const token = authHeader.replace('Bearer ', '');
-    const decoded = jwt.verify(token, JWT_SECRET);
-    return {
-      id: decoded.sub,
-      email: decoded.email,
-      plan_type: decoded.planType || 'starter'
-    };
-  } catch (error) {
-    return null;
-  }
-}
+            try {
+                const response = await fetch('/api/package', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
 
-function requireAuth(req, res, next) {
-  const user = getAuthUser(req);
-  if (!user) {
-    return res.status(401).json({ error: 'Authentication required.' });
-  }
-
-  req.user = user;
-  return next();
-}
-
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'digital-asset-packager' });
-});
-
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { email, password, planType } = req.body || {};
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
-    }
-
-    const user = await createUser({
-      email,
-      password,
-      planType: planType || 'starter'
-    });
-
-    const token = generateToken(user);
-
-    return res.status(201).json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        planType: user.plan_type || 'starter'
-      }
-    });
-  } catch (error) {
-    return res.status(400).json({ error: error.message });
-  }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body || {};
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
-    }
-
-    const user = await verifyUser(email, password);
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
-    }
-
-    const token = generateToken(user);
-
-    return res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        planType: user.plan_type || 'starter'
-      }
-    });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/me', requireAuth, async (req, res) => {
-  try {
-    const user = await getUserById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found.' });
-    }
-
-    return res.json({
-      id: user.id,
-      email: user.email,
-      planType: user.plan_type || 'starter'
-    });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/assets', requireAuth, async (req, res) => {
-  try {
-    const assets = await getAssetsByUser(req.user.id);
-    return res.json({ assets: assets.map((asset) => ({
-      id: asset.id,
-      title: asset.title,
-      author: asset.author,
-      themeUsed: asset.theme_used,
-      pdfUrl: buildDownloadUrl(asset.pdf_path ? asset.pdf_path.split('/').pop() : ''),
-      epubUrl: buildDownloadUrl(asset.epub_path ? asset.epub_path.split('/').pop() : ''),
-      createdAt: asset.created_at
-    })) });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/package', async (req, res) => {
-  try {
-    const { title, author, content, theme } = req.body || {};
-    const authUser = getAuthUser(req);
-
-    if (!title || !content) {
-      return res.status(400).json({ error: 'Title and content are required.' });
-    }
-
-    const result = await packageBook({
-      title,
-      author,
-      content,
-      themeName: theme || 'minimalist'
-    });
-
-    const userId = authUser ? authUser.id : 1;
-
-    await logAsset({
-      userId,
-      title,
-      author,
-      pdfPath: result.pdf_path,
-      epubPath: result.epub_path,
-      themeUsed: theme || 'minimalist'
-    });
-
-    return res.status(200).json({
-      success: true,
-      title,
-      author,
-      theme: theme || 'minimalist',
-      download_urls: {
-        pdf: result.pdf_path,
-        epub: result.epub_path
-      }
-    });
-  } catch (error) {
-    console.error('Packaging failed:', error);
-    return res.status(500).json({
-      error: 'Packaging failed.',
-      details: error.message
-    });
-  }
-});
-
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
-});
-
-async function bootstrap() {
-  await initDatabase();
-  app.listen(PORT, () => {
-    console.log(`Digital Asset Packager running on http://localhost:${PORT}`);
-  });
-}
-
-bootstrap();
+                if (data.success) {
+                    document.getElementById('pdfLink').href = data.pdfUrl;
+                    document.getElementById('epubLink').href = data.epubUrl;
+                    resDiv.classList.remove('hidden');
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch (e) {
+                alert("Server error occurred.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Package Assets 🚀";
+            }
+        };
+    </script>
+</body>
+</html>
