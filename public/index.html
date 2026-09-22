@@ -1,60 +1,52 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Asset Packager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Turn Markdown manuscripts into polished PDF and EPUB files.">
+  <title>Pagecraft — Digital Publishing Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230d1016'/%3E%3Cpath d='M18 15h21a9 9 0 0 1 9 9v25H27a9 9 0 0 1-9-9V15Z' fill='%23e8ff5b'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans">
-    <div class="max-w-4xl mx-auto py-16 px-4">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl font-bold mb-4">📦 Digital Asset Packager</h1>
-            <p class="text-slate-600">Turn raw text into professional PDF & EPUB e-books instantly.</p>
-        </header>
-
-        <div class="bg-white shadow-xl rounded-2xl p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Book Title</label>
-                        <input id="title" type="text" placeholder="e.g. The SaaS Blueprint" class="w-full p-2 border rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Author Name</label>
-                        <input id="author" type="text" placeholder="Your Name" class="w-full p-2 border rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Content (Markdown/Text)</label>
-                        <textarea id="text" rows="12" placeholder="# My Book... " class="w-full p-2 border rounded-lg font-mono text-sm"></textarea>
-                    </div>
-                </div>
-
-                <div class="bg-slate-100 p-6 rounded-xl space-y-6">
-                    <h3 class="text-lg font-semibold">Packaging Settings</h3>
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Visual Theme</label>
-                        <select id="theme" class="w-full p-2 border rounded-lg bg-white">
-                            <option value="minimalist">✨ Clean Minimalist</option>
-                            <option value="professional">💼 Professional Bold</option>
-                        </select>
-                    </div>
-                    <div class="p-4 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
-                        <strong>Pro Tip:</strong> Use # for headers and **bold** for emphasis in your text.
-                    </div>
-                    <button id="packBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200">
-                        Package Assets 🚀
-                    </button>
-                    <div id="results" class="hidden space-y-3 pt-4">
-                        <p class="text-center text-sm font-medium">Your assets are ready!</p>
-                        <a id="pdfLink" href="#" class="block w-full text-center bg-white border border-slate-300 py-2 rounded-lg hover:bg-slate-50">📄 Download PDF</a>
-                        <a id="epubLink" href="#" class="block w-full text-center bg-white border border-slate-300 py-2 rounded-lg hover:bg-slate-50">📖 Download EPUB</a>
-                    </div>
-                </div>
-            </div>
+<body>
+  <div class="noise" aria-hidden="true"></div><div class="orb one" aria-hidden="true"></div><div class="orb two" aria-hidden="true"></div>
+  <header class="topbar"><a class="brand" href="/"><span class="brand-mark"><i></i><i></i><i></i></span>PAGECRAFT</a><div class="online"><span></span>Studio online</div></header>
+  <main class="workspace">
+    <section class="intro"><div><p class="eyebrow">Digital publishing studio / 01</p><h1>From rough draft<br>to <em>finished book.</em></h1></div><p class="intro-copy">Shape your manuscript, choose a visual direction, and export a polished PDF and EPUB in one step.</p></section>
+    <section class="studio">
+      <form id="packageForm" class="editor">
+        <div class="panel-head"><div><span>01</span><h2>Build your edition</h2></div><small>Ready to compose</small></div>
+        <div class="field-row">
+          <label class="field"><span>Book title</span><input id="title" name="title" value="The Quiet Advantage" maxlength="90"></label>
+          <label class="field"><span>Author</span><input id="author" name="author" value="Nikhil Reddy" maxlength="70" autocomplete="name"></label>
         </div>
-    </div>
+        <fieldset class="themes"><legend>Visual direction</legend>
+          <label class="theme active"><input type="radio" name="theme" value="minimalist" checked><b class="swatch light">Aa</b><span><strong>Editorial</strong><small>Clean, restrained, timeless</small></span><i></i></label>
+          <label class="theme"><input type="radio" name="theme" value="professional"><b class="swatch dark">Aa</b><span><strong>Executive</strong><small>Bold, structured, assured</small></span><i></i></label>
+        </fieldset>
+        <label class="field manuscript"><span>Manuscript <b>Markdown supported</b></span><textarea id="text" name="text" rows="13"># A better way to begin
 
-    <script src="/app.js"></script>
-</body>
-</html>
+The strongest ideas rarely arrive finished. They begin as fragments, questions, and a few honest sentences.
+
+## Make the work visible
+
+Clarity grows when you give your thinking a shape. Write the rough version. Find the pattern. Then refine what matters.
+
+> Good publishing makes the reader forget the page and remember the idea.</textarea></label>
+        <div class="editor-foot"><span id="wordCount">0 words</span><button id="packBtn" type="submit"><span>Package my book</span><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+      </form>
+      <aside class="preview">
+        <div class="panel-head"><div><span>02</span><h2>Live cover</h2></div><small>A5 / 148 × 210</small></div>
+        <div id="bookScene" class="scene"><div class="shadow"></div><div id="book" class="book"><div class="spine"></div><div class="pages"></div><div class="cover"><small>A PAGECRAFT EDITION</small><hr><h3 id="coverTitle">The Quiet Advantage</h3><p id="coverAuthor">Nikhil Reddy</p><div class="cover-mark"><i></i><i></i><i></i></div></div></div><p class="hint">↗ Move your cursor to inspect</p></div>
+        <div class="result" aria-live="polite">
+          <div class="idle"><b>↳</b><span><strong>Your export will appear here</strong><small>PDF and EPUB, ready to download</small></span></div>
+          <div class="working" hidden><b class="loader"></b><span><strong>Composing your edition</strong><small>Typesetting pages and building files…</small></span></div>
+          <div class="ready" hidden><div class="success"><b>✓</b><span><strong>Edition ready</strong><small>Your files were packaged successfully.</small></span></div><div class="downloads"><a id="pdfLink" href="#" target="_blank"><strong>PDF</strong><small>Print-ready document</small><b>↓</b></a><a id="epubLink" href="#" target="_blank"><strong>EPUB</strong><small>Flexible e-book</small><b>↓</b></a></div></div>
+          <div class="error" hidden><b>!</b><span><strong>Packaging failed</strong><small id="errorMessage">Please try again.</small></span></div>
+        </div>
+      </aside>
+    </section>
+    <footer><span>PAGECRAFT / DIGITAL PUBLISHING TOOLS</span><span>Markdown → PDF + EPUB</span></footer>
+  </main><script src="/app.js"></script>
+</body></html>

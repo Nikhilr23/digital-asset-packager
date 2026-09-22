@@ -1,34 +1,8 @@
-        document.getElementById('packBtn').onclick = async () => {
-            const btn = document.getElementById('packBtn');
-            const resDiv = document.getElementById('results');
-            btn.disabled = true;
-            btn.innerText = "Packaging...";
-            resDiv.classList.add('hidden');
-
-            const formData = new FormData();
-            formData.append('text', document.getElementById('text').value);
-            formData.append('title', document.getElementById('title').value);
-            formData.append('author', document.getElementById('author').value);
-            formData.append('theme', document.getElementById('theme').value);
-
-            try {
-                const response = await fetch('/api/package', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    document.getElementById('pdfLink').href = data.pdfUrl;
-                    document.getElementById('epubLink').href = data.epubUrl;
-                    resDiv.classList.remove('hidden');
-                } else {
-                    alert("Error: " + data.error);
-                }
-            } catch (e) {
-                alert("Server error occurred.");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Package Assets 🚀";
-            }
-        };
+const $=s=>document.querySelector(s), form=$('#packageForm'), title=$('#title'), author=$('#author'), text=$('#text'), button=$('#packBtn'), book=$('#book');
+const states={idle:$('.idle'),working:$('.working'),ready:$('.ready'),error:$('.error')};
+function preview(){ $('#coverTitle').textContent=title.value.trim()||'Untitled Edition'; $('#coverAuthor').textContent=author.value.trim()||'Unknown Author'; const n=text.value.trim()?text.value.trim().split(/\s+/).length:0; $('#wordCount').textContent=`${n} ${n===1?'word':'words'}`; }
+function state(name){Object.values(states).forEach(el=>el.hidden=true);states[name].hidden=false}
+[title,author,text].forEach(el=>el.addEventListener('input',preview));
+document.querySelectorAll('.theme').forEach(el=>el.addEventListener('click',()=>{document.querySelectorAll('.theme').forEach(x=>x.classList.remove('active'));el.classList.add('active');book.classList.toggle('executive',el.querySelector('input').value==='professional')}));
+if(matchMedia('(pointer:fine)').matches&&!matchMedia('(prefers-reduced-motion:reduce)').matches){const scene=$('#bookScene');scene.addEventListener('mousemove',e=>{const r=scene.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;book.style.transform=`rotateY(${-22+x*26}deg) rotateX(${5-y*15}deg)`});scene.addEventListener('mouseleave',()=>book.style.transform='rotateY(-22deg) rotateX(5deg)')}
+form.addEventListener('submit',async e=>{e.preventDefault();if(!text.value.trim()){ $('#errorMessage').textContent='Add some manuscript content before packaging.';state('error');text.focus();return }button.disabled=true;button.querySelector('span').textContent='Building your edition…';state('working');const data=new FormData();data.append('title',title.value.trim());data.append('author',author.value.trim());data.append('text',text.value);data.append('theme',form.elements.theme.value);try{const res=await fetch('/api/package',{method:'POST',body:data}),out=await res.json().catch(()=>({}));if(!res.ok||!out.success)throw new Error(out.error||'The files could not be created.');$('#pdfLink').href=out.pdfUrl;$('#epubLink').href=out.epubUrl;state('ready')}catch(err){$('#errorMessage').textContent=err.message||'Please try again in a moment.';state('error')}finally{button.disabled=false;button.querySelector('span').textContent='Package my book'}});preview();
